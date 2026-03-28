@@ -1,15 +1,27 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { AlertTriangle, Phone } from 'lucide-react'
+import { AlertTriangle, Phone, GitMerge, Loader2 } from 'lucide-react'
 import { adminLoansRepository } from '@/features/manage-loans/api/adminLoansRepository'
 import { Card, CardContent } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/ui/table'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
+} from '@/shared/ui/dialog'
+import { Label } from '@/shared/ui/label'
+import { Input } from '@/shared/ui/input'
 import { formatCurrency, formatDate, getDaysOverdue } from '@/shared/lib/utils'
+import type { Loan } from '@/entities/loan'
 
 export function OverdueLoansPage() {
+  const queryClient = useQueryClient()
+  const [restructuringLoan, setRestructuringLoan] = useState<Loan | null>(null)
+  const [numInstallments, setNumInstallments] = useState('3')
+  const [isRestructuring, setIsRestructuring] = useState(false)
+
   const { data: loans = [], isLoading } = useQuery({
     queryKey: ['admin', 'loans', 'overdue'],
     queryFn: adminLoansRepository.getOverdueLoans,
@@ -22,6 +34,27 @@ export function OverdueLoansPage() {
 
   const handleContact = (phone: string) => {
     toast.info(`Teléfono: ${phone}`)
+  }
+
+  const handleRestructure = async () => {
+    if (!restructuringLoan) return
+    const n = Number(numInstallments)
+    if (!n || n < 1 || n > 6) {
+      toast.error('El número de cuotas debe estar entre 1 y 6')
+      return
+    }
+    setIsRestructuring(true)
+    try {
+      const result = await adminLoansRepository.restructureLoan(restructuringLoan.id, n)
+      toast.success(result.message)
+      setRestructuringLoan(null)
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg ?? 'Error al reestructurar el préstamo')
+    } finally {
+      setIsRestructuring(false)
+    }
   }
 
   return (
@@ -58,6 +91,7 @@ export function OverdueLoansPage() {
                   <TableHead>Vencimiento</TableHead>
                   <TableHead>Días en mora</TableHead>
                   <TableHead>Contacto</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -86,6 +120,16 @@ export function OverdueLoansPage() {
                           {loan.user?.phone}
                         </Button>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => { setRestructuringLoan(loan); setNumInstallments('3') }}
+                        >
+                          <GitMerge className="h-3 w-3 mr-1" />
+                          Reestructurar
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   )
                 })}
@@ -94,6 +138,47 @@ export function OverdueLoansPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Restructure dialog */}
+      <Dialog open={!!restructuringLoan} onOpenChange={(open) => { if (!open) setRestructuringLoan(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reestructurar préstamo</DialogTitle>
+          </DialogHeader>
+          {restructuringLoan && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
+                <p><span className="text-muted-foreground">Cliente:</span> <strong>{restructuringLoan.user?.firstName} {restructuringLoan.user?.lastName}</strong></p>
+                <p><span className="text-muted-foreground">Monto:</span> <strong>{formatCurrency(restructuringLoan.amount)}</strong></p>
+                <p><span className="text-muted-foreground">Días en mora:</span> <strong>{restructuringLoan.dueDate ? getDaysOverdue(restructuringLoan.dueDate) : 0}</strong></p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                La mora acumulada se capitalizará en el nuevo principal. El préstamo queda ACTIVO con nuevo cronograma de pagos.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="numInstallments">Número de nuevas cuotas (1–6)</Label>
+                <Input
+                  id="numInstallments"
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={numInstallments}
+                  onChange={e => setNumInstallments(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={isRestructuring}>Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleRestructure} disabled={isRestructuring}>
+              {isRestructuring && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirmar reestructuración
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

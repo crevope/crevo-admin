@@ -6,7 +6,9 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { PendingLoansPage } from '@/pages/PendingLoansPage'
 import { AllLoansPage } from '@/pages/AllLoansPage'
 import { OverdueLoansPage } from '@/pages/OverdueLoansPage'
+import { DisbursementsPage } from '@/pages/DisbursementsPage'
 import { UsersPage } from '@/pages/UsersPage'
+import { AuditLogPage } from '@/pages/AuditLogPage'
 import { ParametersPage } from '@/pages/ParametersPage'
 
 export function AppRoutes() {
@@ -23,7 +25,9 @@ export function AppRoutes() {
         <Route path="loans/pending" element={<PendingLoansPage />} />
         <Route path="loans/all" element={<AllLoansPage />} />
         <Route path="loans/overdue" element={<OverdueLoansPage />} />
+        <Route path="disbursements" element={<DisbursementsPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="audit-log" element={<AuditLogPage />} />
         <Route path="parameters" element={<ParametersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

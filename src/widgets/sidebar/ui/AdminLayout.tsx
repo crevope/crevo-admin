@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Clock, List, AlertTriangle,
-  Users, Menu, LogOut, SlidersHorizontal,
+  Users, Menu, LogOut, SlidersHorizontal, Banknote, ShieldCheck,
 } from 'lucide-react'
 import { useAdminAuthStore } from '@/features/admin-auth'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
@@ -15,7 +15,9 @@ const NAV_ITEMS = [
   { to: '/loans/pending', icon: Clock, label: 'Pendientes' },
   { to: '/loans/all', icon: List, label: 'Todos los préstamos' },
   { to: '/loans/overdue', icon: AlertTriangle, label: 'En mora' },
+  { to: '/disbursements', icon: Banknote, label: 'Desembolsos' },
   { to: '/users', icon: Users, label: 'Usuarios' },
+  { to: '/audit-log', icon: ShieldCheck, label: 'Auditoría' },
   { to: '/parameters', icon: SlidersHorizontal, label: 'Parametrías' },
 ]
 

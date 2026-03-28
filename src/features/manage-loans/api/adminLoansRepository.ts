@@ -2,6 +2,17 @@ import { apiClient } from '@/shared/api/client'
 import type { Loan, DashboardStats } from '@/entities/loan'
 import type { AdminUser } from '@/entities/user'
 
+export interface RestructureResult {
+  loanId: string
+  restructureCount: number
+  newPrincipal: number
+  newInstallmentAmount: number
+  newNumInstallments: number
+  newDueDate: string
+  capitalizedDebt: number
+  message: string
+}
+
 export const adminLoansRepository = {
   async getDashboardStats(): Promise<DashboardStats> {
     const { data } = await apiClient.get('/admin/stats')
@@ -29,6 +40,10 @@ export const adminLoansRepository = {
   },
   async disburseLoan(loanId: string): Promise<Loan> {
     const { data } = await apiClient.post(`/admin/loans/${loanId}/disburse`)
+    return data.data
+  },
+  async restructureLoan(loanId: string, newNumInstallments?: number): Promise<RestructureResult> {
+    const { data } = await apiClient.post(`/loans/${loanId}/restructure`, { newNumInstallments })
     return data.data
   },
 }

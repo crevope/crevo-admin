@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, Download } from 'lucide-react'
 import { adminUsersRepository } from '@/features/manage-loans/api/adminLoansRepository'
 import { type KycUserStatus } from '@/entities/user/model/types'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -10,7 +10,7 @@ import { Input } from '@/shared/ui/input'
 import { Badge } from '@/shared/ui/badge'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/ui/table'
-import { formatDate } from '@/shared/lib/utils'
+import { formatDate, exportToCsv } from '@/shared/lib/utils'
 
 const KYC_BADGE: Record<KycUserStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className?: string }> = {
   VERIFIED: { label: 'Verificado', variant: 'secondary', className: 'bg-green-100 text-green-700 border-green-200' },
@@ -58,7 +58,28 @@ export function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Usuarios</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} usuarios</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{filtered.length} usuarios</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportToCsv('usuarios.csv', filtered.map(u => ({
+              id: u.id,
+              nombre: `${u.firstName} ${u.lastName}`,
+              email: u.email,
+              dni: u.dni,
+              telefono: u.phone,
+              rol: u.role,
+              kyc: u.status ?? (u.isIdentityVerified ? 'VERIFIED' : 'PENDING_VERIFICATION'),
+              suspendido: u.isSuspended ? 'Si' : 'No',
+              registro: u.createdAt,
+            })))}
+            disabled={filtered.length === 0}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Exportar CSV
+          </Button>
+        </div>
       </div>
 
       <div className="relative">

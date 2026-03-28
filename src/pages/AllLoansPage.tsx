@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Search, Loader2, ExternalLink } from 'lucide-react'
+import { Search, Loader2, ExternalLink, Download } from 'lucide-react'
 import { adminLoansRepository } from '@/features/manage-loans/api/adminLoansRepository'
 import { LoanStatusBadge } from '@/entities/loan'
 import { Card, CardContent } from '@/shared/ui/card'
@@ -9,7 +9,7 @@ import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/ui/table'
-import { formatCurrency, formatDate } from '@/shared/lib/utils'
+import { formatCurrency, formatDate, exportToCsv } from '@/shared/lib/utils'
 
 const PAGE_SIZE = 20
 
@@ -55,7 +55,29 @@ export function AllLoansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Todos los Préstamos</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} préstamos</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{filtered.length} préstamos</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportToCsv('prestamos.csv', filtered.map(l => ({
+              id: l.id,
+              nombre: `${l.user?.firstName ?? ''} ${l.user?.lastName ?? ''}`.trim(),
+              email: l.user?.email ?? '',
+              dni: l.user?.dni ?? '',
+              monto: l.amount,
+              total: l.totalAmount,
+              estado: l.status,
+              plazo_dias: l.termDays,
+              vencimiento: l.dueDate ?? '',
+              creado: l.createdAt,
+            })))}
+            disabled={filtered.length === 0}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Exportar CSV
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
