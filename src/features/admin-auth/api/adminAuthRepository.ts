@@ -1,4 +1,4 @@
-﻿import { apiClient, ADMIN_TOKEN_KEY } from '@/shared/api/client'
+import { apiClient, ADMIN_USER_KEY } from '@/shared/api/client'
 
 interface AdminInfo {
   id: string
@@ -8,26 +8,46 @@ interface AdminInfo {
   role: string
 }
 
-interface LoginResponse {
-  user: AdminInfo
-  token: string
-}
-
+/**
+ * Auth repository for the admin panel.
+ *
+ * Tokens live exclusively in HttpOnly cookies (`crevo_at`, `crevo_rt`) set by
+ * the server — JavaScript never touches them. The only thing we cache in
+ * localStorage is the user profile for instant hydration on page reload.
+ */
 export const adminAuthRepository = {
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<AdminInfo> {
     const { data } = await apiClient.post('/auth/login', { email, password })
-    if (data.data.user.role !== 'ADMIN') {
+    const user: AdminInfo = data.data.user
+    if (user.role !== 'ADMIN') {
+      // If a non-admin logs in, clear the cookie the server just set and bail.
+      await apiClient.post('/auth/logout', {}).catch(() => {})
       throw new Error('No tienes permisos de administrador')
     }
-    return data.data
+    return user
   },
-  saveToken(token: string) { localStorage.setItem(ADMIN_TOKEN_KEY, token) },
-  clearToken() { localStorage.removeItem(ADMIN_TOKEN_KEY) },
-  getToken(): string | null { return localStorage.getItem(ADMIN_TOKEN_KEY) },
-  saveUser(user: AdminInfo) { localStorage.setItem('crevo_admin_user', JSON.stringify(user)) },
-  clearUser() { localStorage.removeItem('crevo_admin_user') },
+
+  async logout(): Promise<void> {
+    // Server revokes the refresh token and clears cookies. Best-effort: if
+    // the network is down we still clear the local cache.
+    await apiClient.post('/auth/logout', {}).catch(() => {})
+  },
+
+  saveUser(user: AdminInfo) {
+    localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user))
+  },
+
+  clearUser() {
+    localStorage.removeItem(ADMIN_USER_KEY)
+  },
+
   getStoredUser(): AdminInfo | null {
-    const raw = localStorage.getItem('crevo_admin_user')
-    return raw ? JSON.parse(raw) : null
+    const raw = localStorage.getItem(ADMIN_USER_KEY)
+    if (!raw) return null
+    try {
+      return JSON.parse(raw) as AdminInfo
+    } catch {
+      return null
+    }
   },
 }

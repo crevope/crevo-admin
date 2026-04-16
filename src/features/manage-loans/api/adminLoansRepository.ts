@@ -15,7 +15,7 @@ export interface RestructureResult {
 
 export const adminLoansRepository = {
   async getDashboardStats(): Promise<DashboardStats> {
-    const { data } = await apiClient.get('/admin/stats')
+    const { data } = await apiClient.get('/admin/dashboard')
     return data.data
   },
   async getPendingLoans(): Promise<Loan[]> {
