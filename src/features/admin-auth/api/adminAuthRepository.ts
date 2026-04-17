@@ -1,5 +1,4 @@
-import { apiClient, ADMIN_USER_KEY } from '@/shared/api/client'
-import { clearAuthLocalStorage } from '@/shared/lib/sessionStorage'
+import { apiClient, ADMIN_USER_KEY, clearClientSession } from '@/shared/api/client'
 
 interface AdminInfo {
   id: string
@@ -38,9 +37,10 @@ export const adminAuthRepository = {
     localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user))
   },
 
-  /** Wipes localStorage on logout while preserving theme preference. */
+  /** Full client-side cleanup on logout: localStorage (preserves theme),
+   *  sessionStorage CSRF, and the readable CSRF cookie. */
   clearUser() {
-    clearAuthLocalStorage()
+    clearClientSession()
   },
 
   getStoredUser(): AdminInfo | null {
