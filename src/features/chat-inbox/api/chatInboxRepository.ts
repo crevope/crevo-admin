@@ -1,10 +1,12 @@
 import { apiClient } from '@/shared/api/client'
+import { supabase } from '@/shared/lib/supabaseClient'
 import type {
   ChatInboxListResult,
   ChatConversationDetail,
   ChatConversationAdminView,
   ChatMessageAdminView,
   ChatMetrics,
+  ChatAttachmentUploadUrl,
   InboxFilters,
 } from '../types'
 
@@ -51,12 +53,46 @@ export const chatInboxRepository = {
     return data?.data as ChatConversationDetail
   },
 
-  /** Agent reply. Auto-assigns the conversation to the agent if unassigned. */
-  async sendMessage(conversationId: string, body: string): Promise<ChatMessageAdminView> {
+  /** Agent reply. Auto-assigns the conversation to the agent if unassigned.
+   *  Body or attachment is required (entity invariant). */
+  async sendMessage(
+    conversationId: string,
+    body: string,
+    attachment?: {
+      path: string
+      mimeType: string
+      filename: string
+      sizeBytes?: number
+    },
+  ): Promise<ChatMessageAdminView> {
     const { data } = await apiClient.post(`/chat/admin/conversations/${conversationId}/messages`, {
       body,
+      attachment,
     })
     return data?.data as ChatMessageAdminView
+  },
+
+  /** Step 1 of attachment flow — signed URL from the backend. */
+  async requestUploadUrl(params: {
+    conversationId: string
+    filename: string
+    mimeType: string
+    sizeBytes: number
+  }): Promise<ChatAttachmentUploadUrl> {
+    const { data } = await apiClient.post('/chat/attachments/upload-url', params)
+    return data?.data as ChatAttachmentUploadUrl
+  },
+
+  /** Step 2 — actual upload via Supabase JS SDK helper. */
+  async uploadAttachment(file: File, signed: ChatAttachmentUploadUrl): Promise<void> {
+    const { error } = await supabase.storage
+      .from('chat-attachments')
+      .uploadToSignedUrl(signed.path, signed.token, file, {
+        contentType: file.type,
+      })
+    if (error) {
+      throw new Error(error.message || 'No se pudo subir el archivo')
+    }
   },
 
   /** Explicit assign — if `agentId` is omitted the backend self-assigns to caller. */

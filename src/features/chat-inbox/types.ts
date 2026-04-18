@@ -46,9 +46,35 @@ export interface ChatMessageAdminView {
   conversationId: string
   senderType: ChatSenderType
   senderId: string | null
+  /** May be empty string when the message is attachment-only. */
   body: string
   readAt: string | null
   createdAt: string
+
+  // Attachment metadata + signed URL (server-generated per request).
+  attachmentPath?: string | null
+  attachmentMimeType?: string | null
+  attachmentFilename?: string | null
+  attachmentSizeBytes?: number | null
+  attachmentUrl?: string | null
+}
+
+/** Phase 1 attachment whitelist — kept in sync with backend. */
+export const ALLOWED_ATTACHMENT_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+] as const
+export type ChatAttachmentMimeType = (typeof ALLOWED_ATTACHMENT_MIME_TYPES)[number]
+export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024
+
+/** Response shape from POST /chat/attachments/upload-url. */
+export interface ChatAttachmentUploadUrl {
+  path: string
+  signedUrl: string
+  token: string
+  expiresIn: number
 }
 
 export interface ChatInboxListResult {
