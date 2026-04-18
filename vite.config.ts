@@ -2,9 +2,20 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { firebaseMessagingSwPlugin } from './vite-plugins/firebase-messaging-sw'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Substitutes REPLACE_ME_FIREBASE_* placeholders in
+    // public/firebase-messaging-sw.js with the actual VITE_FIREBASE_*
+    // env values at build time + serves the substituted file in dev.
+    // SW files can't read import.meta.env, so this plugin keeps the
+    // single source of truth in .env without forcing manual edits to
+    // the SW source file. See vite-plugins/firebase-messaging-sw.ts.
+    firebaseMessagingSwPlugin(),
+  ],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },

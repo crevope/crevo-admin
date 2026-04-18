@@ -6,19 +6,18 @@
  * instead (see useAdminPushNotifications) and decides whether to show
  * a notification based on whether the in-app alerts already covered it.
  *
- * Importantly: Firebase config is INLINED here because service workers
- * can't read import.meta.env at build time and don't share env access
- * with the page. Update the values when you change the Firebase project.
- *
- * If you need to keep config out of source control, swap to a
- * `serveFirebaseSw` route in the backend (like crevo-web does for the
- * main SW). For Phase 1 the admin is internal-only so inlining is fine.
+ * The Firebase config below uses REPLACE_ME_* placeholders. DO NOT edit
+ * them by hand — the `firebaseMessagingSwPlugin` Vite plugin
+ * (vite-plugins/firebase-messaging-sw.ts) substitutes them at runtime
+ * (dev: the dev server middleware rewrites the response on the fly) and
+ * at build time (prod: the writeBundle hook rewrites the file emitted
+ * to dist/). The values come from the same VITE_FIREBASE_* env vars the
+ * page bundle reads — single source of truth in .env.
  *
  * IMPORTANT: this file lives in /public so Vite copies it to dist/ root
- * unchanged. The browser fetches it from the SCOPE root (/firebase-
- * messaging-sw.js) — Firebase Messaging requires this exact path by
- * default (overridable via getToken({ serviceWorkerRegistration }) but
- * we use the default).
+ * unchanged (modulo the substitution above). The browser fetches it
+ * from the SCOPE root (/firebase-messaging-sw.js) — Firebase Messaging
+ * requires this exact path by default.
  */
 
 // eslint-disable-next-line no-undef
@@ -26,9 +25,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js
 // eslint-disable-next-line no-undef
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js')
 
-// NOTE: Replace these placeholders with the actual Firebase web config
-// values from the Firebase Console (Project Settings → General →
-// Your apps → Web). Same project as crevo-web is fine.
+// Auto-injected by firebaseMessagingSwPlugin from VITE_FIREBASE_* env vars.
 // eslint-disable-next-line no-undef
 firebase.initializeApp({
   apiKey: 'REPLACE_ME_FIREBASE_API_KEY',
