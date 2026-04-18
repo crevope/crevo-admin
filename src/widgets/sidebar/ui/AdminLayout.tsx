@@ -8,6 +8,7 @@ import {
 import { useAdminAuthStore } from '@/features/admin-auth'
 import { WorkQueueBadge } from '@/features/manage-work-queue'
 import { ChatUnreadBadge, useChatInboxAlerts } from '@/features/chat-inbox'
+import { useAdminPushNotifications } from '@/shared/hooks/useAdminPushNotifications'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
 import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
@@ -52,6 +53,11 @@ export function AdminLayout() {
   // ChatInboxPage) so it works even when the agent is browsing a customer
   // profile, the work queue, etc.
   useChatInboxAlerts()
+
+  // OS-level push notifications via FCM. Covers the case where the admin
+  // tab is closed entirely. Skips silently in dev or when Firebase config
+  // is missing — the in-tab alerts above remain the authoritative signal.
+  useAdminPushNotifications()
 
   const handleLogout = () => {
     logout()
