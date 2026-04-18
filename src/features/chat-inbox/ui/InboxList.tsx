@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { Loader2, MessageCircle, Inbox as InboxIcon, User as UserIcon } from 'lucide-react'
+import { Loader2, MessageCircle, Inbox as InboxIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { formatRelativeDate } from '@/shared/lib/utils'
 import { Badge } from '@/shared/ui/badge'
 import type { ChatConversationAdminView } from '../types'
+import { chatUserDisplayName, chatUserInitials } from '../types'
 
 interface Props {
   items: ChatConversationAdminView[]
@@ -72,6 +73,8 @@ function ConversationRow({
 }) {
   const hasUnread = conversation.agentUnreadCount > 0
   const isClosed = conversation.status === 'CLOSED'
+  const displayName = chatUserDisplayName(conversation.user, conversation.userId)
+  const initials = chatUserInitials(conversation.user, conversation.userId)
 
   return (
     <li>
@@ -86,8 +89,11 @@ function ConversationRow({
         )}
       >
         <div className="flex items-start gap-2.5">
-          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-            <UserIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          {/* Avatar — initials over a brand-tinted circle. The backend
+              hands us the resolved user; we never call out for a photo
+              url because chat doesn't currently surface profile pics. */}
+          <div className="h-9 w-9 rounded-full bg-brand-accent/15 text-brand-accent flex items-center justify-center shrink-0 text-xs font-semibold">
+            {initials}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2 mb-0.5">
@@ -96,8 +102,9 @@ function ConversationRow({
                   'text-sm truncate',
                   hasUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground',
                 )}
+                title={displayName}
               >
-                Usuario #{conversation.userId.slice(0, 8)}
+                {displayName}
               </p>
               {conversation.lastMessageAt && (
                 <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">

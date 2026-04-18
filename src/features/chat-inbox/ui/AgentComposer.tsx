@@ -70,6 +70,7 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
               lastMessagePreview: body.slice(0, 120),
             },
             messages: [...prev.messages, tempMessage],
+            user: prev.user,
           }
         },
       )
@@ -85,6 +86,7 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
           return {
             conversation: prev.conversation,
             messages: prev.messages.map((m) => (m.id === ctx?.tempId ? saved : m)),
+            user: prev.user,
           }
         },
       )

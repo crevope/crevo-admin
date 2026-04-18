@@ -96,7 +96,9 @@ function _applyEventToCache(
       }
 
       // Bump conversation activity + unread (only for user messages —
-      // agent messages don't count as unread for the agent).
+      // agent messages don't count as unread for the agent). user info
+      // passes through unchanged — broadcast events never alter the
+      // owner identity.
       const isFromUser = incoming.senderType === 'user'
       return {
         conversation: {
@@ -109,6 +111,7 @@ function _applyEventToCache(
             : prev.conversation.agentUnreadCount,
         },
         messages: nextMessages,
+        user: prev.user,
       }
     }
     case 'read_receipt': {
@@ -120,6 +123,7 @@ function _applyEventToCache(
         messages: prev.messages.map((m) =>
           m.senderType === 'agent' && !m.readAt ? { ...m, readAt: event.at } : m,
         ),
+        user: prev.user,
       }
     }
     case 'conversation_closed': {
@@ -130,6 +134,7 @@ function _applyEventToCache(
           closedAt: event.closedAt,
         },
         messages: prev.messages,
+        user: prev.user,
       }
     }
     case 'typing': {

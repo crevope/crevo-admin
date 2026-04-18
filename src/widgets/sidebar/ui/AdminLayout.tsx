@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAdminAuthStore } from '@/features/admin-auth'
 import { WorkQueueBadge } from '@/features/manage-work-queue'
-import { ChatUnreadBadge } from '@/features/chat-inbox'
+import { ChatUnreadBadge, useChatInboxAlerts } from '@/features/chat-inbox'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
 import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
@@ -46,6 +46,12 @@ export function AdminLayout() {
   const { user, logout } = useAdminAuthStore()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // App-wide chat alerts: tab-title bump + soft ping when a user message
+  // arrives while the agent is on another tab / page. Hooked here (not on
+  // ChatInboxPage) so it works even when the agent is browsing a customer
+  // profile, the work queue, etc.
+  useChatInboxAlerts()
 
   const handleLogout = () => {
     logout()

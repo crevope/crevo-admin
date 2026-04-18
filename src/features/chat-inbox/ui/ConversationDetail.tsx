@@ -19,6 +19,7 @@ import { MessageBubble } from './MessageBubble'
 import { AgentComposer } from './AgentComposer'
 import { TypingIndicator } from './TypingIndicator'
 import type { ChatConversationDetail as Detail } from '../types'
+import { chatUserDisplayName } from '../types'
 
 interface Props {
   conversationId: string
@@ -46,7 +47,8 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
     onSuccess: (updated) => {
       qc.setQueryData<Detail | undefined>(conversationQueryKey(conversationId), (prev) => {
         if (!prev) return prev
-        return { conversation: updated, messages: prev.messages }
+        // Preserve user info — assign mutation only mutates the conversation row.
+        return { conversation: updated, messages: prev.messages, user: prev.user }
       })
       qc.invalidateQueries({ queryKey: ['admin', 'chat', 'inbox'] })
       toast.success('Conversación asignada a ti')
@@ -59,7 +61,7 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
     onSuccess: (updated) => {
       qc.setQueryData<Detail | undefined>(conversationQueryKey(conversationId), (prev) => {
         if (!prev) return prev
-        return { conversation: updated, messages: prev.messages }
+        return { conversation: updated, messages: prev.messages, user: prev.user }
       })
       qc.invalidateQueries({ queryKey: ['admin', 'chat', 'inbox'] })
       toast.success('Conversación cerrada')
@@ -91,9 +93,10 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
     )
   }
 
-  const { conversation, messages } = data
+  const { conversation, messages, user } = data
   const isClosed = conversation.status === 'CLOSED'
   const isMine = conversation.assignedTo === agentId
+  const displayName = chatUserDisplayName(user, conversation.userId)
 
   return (
     // min-h-0 is the magic that lets the inner thread (flex-1 overflow-y-auto)
@@ -106,8 +109,8 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-foreground truncate">
-                Usuario #{conversation.userId.slice(0, 8)}
+              <h2 className="text-sm font-semibold text-foreground truncate" title={displayName}>
+                {displayName}
               </h2>
               {isClosed && (
                 <Badge variant="secondary" className="h-5 text-[10px]">
@@ -126,10 +129,8 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
               )}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Iniciada {formatDateTime(conversation.createdAt)}
-              {conversation.closedAt && (
-                <> · Cerrada {formatDateTime(conversation.closedAt)}</>
-              )}
+              {user?.email && <>{user.email} · </>}Iniciada {formatDateTime(conversation.createdAt)}
+              {conversation.closedAt && <> · Cerrada {formatDateTime(conversation.closedAt)}</>}
             </p>
           </div>
 
