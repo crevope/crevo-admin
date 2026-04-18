@@ -102,7 +102,7 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
 
   if (isClosed) {
     return (
-      <div className="border-t border-border px-4 py-3 bg-muted/40">
+      <div className="px-4 py-3">
         <p className="text-xs text-muted-foreground text-center">
           Esta conversación está cerrada. El usuario verá tu mensaje sólo si la reabre — para
           continuar pídele que inicie un nuevo chat.
@@ -131,7 +131,10 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
   const overLimit = remaining < 0
 
   return (
-    <div className="border-t border-border bg-card px-3 py-2.5">
+    // No border-t / bg-card here — the parent rail in ConversationDetail
+    // owns those so the divider spans the full pane width while the
+    // textarea+button stay centered with the thread above.
+    <div className="px-3 py-2.5">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}

@@ -63,86 +63,85 @@ export function ChatInboxPage() {
   const showDetailOnly = Boolean(conversationId)
 
   return (
-    // Height math: AdminLayout wraps every page in `<main className="flex-1
-    // overflow-auto"><div className="...p-6 lg:p-8"><Outlet/></div>`. So the
-    // page's available height = main_height - wrapper_padding, which is
-    // 100dvh minus the mobile header (3.5rem when shown) minus the wrapper's
-    // vertical padding (3rem at base / 4rem at lg+). With these explicit
-    // values the wrapper exactly fills main, so AdminLayout's main has
-    // nothing to overflow and our internal flex chain owns the scroll.
+    // Outer wrapper takes the full available height inside AdminLayout's
+    // main area (which is itself constrained to 100dvh minus the mobile
+    // header). The negative margins cancel AdminLayout's `p-6 lg:p-8`
+    // wrapper padding so we own the layout edge-to-edge; we then add our
+    // own padding (p-4 lg:p-6) to give the chat card breathing room
+    // instead of pinning it to the screen edges.
     //
-    // overflow-hidden + min-h-0 on the descendants is the second half of the
-    // story: without min-h-0, flex-1 children won't shrink below their
-    // intrinsic content size and the thread/list would push past us.
-    // With both pieces in place, the only scrollable areas are the
-    // conversation thread and the inbox list — exactly what we want.
+    // The card itself fills the wrapper (h-full) so the chat panes meet
+    // its rounded corners cleanly; min-h-0 + overflow-hidden on the
+    // descendants confine scrolling to the thread + inbox list.
     <div
-      className="flex flex-col md:flex-row -m-6 lg:-m-8 overflow-hidden
+      className="-m-6 lg:-m-8 p-4 lg:p-6 overflow-hidden
                  h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-3rem)] lg:h-[calc(100dvh-4rem)]"
     >
-      {/* List pane */}
-      <aside
-        className={cn(
-          'flex flex-col border-r border-border bg-card md:w-80 md:shrink-0 min-h-0',
-          showDetailOnly ? 'hidden md:flex' : 'flex flex-1',
-        )}
-      >
-        {/* Header + tabs */}
-        <div className="shrink-0 border-b border-border">
-          <div className="flex items-center gap-2 px-4 py-3">
-            <Headphones className="h-4 w-4 text-brand-accent" aria-hidden="true" />
-            <h1 className="text-sm font-semibold">Chat de soporte</h1>
+      <div className="h-full flex flex-col md:flex-row rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+        {/* List pane */}
+        <aside
+          className={cn(
+            'flex flex-col border-border bg-card md:w-80 md:shrink-0 min-h-0 md:border-r',
+            showDetailOnly ? 'hidden md:flex' : 'flex flex-1',
+          )}
+        >
+          {/* Header + tabs */}
+          <div className="shrink-0 border-b border-border">
+            <div className="flex items-center gap-2 px-4 py-3">
+              <Headphones className="h-4 w-4 text-brand-accent" aria-hidden="true" />
+              <h1 className="text-sm font-semibold">Chat de soporte</h1>
+            </div>
+            <div className="flex border-t border-border">
+              {TABS.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setTab(t.value)}
+                  className={cn(
+                    'flex-1 py-2 text-xs font-medium transition-colors border-b-2',
+                    tab === t.value
+                      ? 'border-brand-accent text-brand-accent'
+                      : 'border-transparent text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex border-t border-border">
-            {TABS.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setTab(t.value)}
-                className={cn(
-                  'flex-1 py-2 text-xs font-medium transition-colors border-b-2',
-                  tab === t.value
-                    ? 'border-brand-accent text-brand-accent'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <InboxList
-          items={items}
-          isLoading={isLoading}
-          activeConversationId={conversationId ?? null}
-        />
-      </aside>
+          <InboxList
+            items={items}
+            isLoading={isLoading}
+            activeConversationId={conversationId ?? null}
+          />
+        </aside>
 
-      {/* Detail pane */}
-      <section
-        className={cn(
-          'flex-1 flex flex-col min-w-0 min-h-0',
-          showDetailOnly ? 'flex' : 'hidden md:flex',
-        )}
-      >
-        {/* Mobile back button when a conversation is open */}
-        {showDetailOnly && (
-          <button
-            type="button"
-            onClick={() => navigate('/chat')}
-            className="md:hidden shrink-0 px-4 py-2 text-xs text-brand-accent border-b border-border bg-card text-left"
-          >
-            ← Volver al inbox
-          </button>
-        )}
+        {/* Detail pane */}
+        <section
+          className={cn(
+            'flex-1 flex flex-col min-w-0 min-h-0',
+            showDetailOnly ? 'flex' : 'hidden md:flex',
+          )}
+        >
+          {/* Mobile back button when a conversation is open */}
+          {showDetailOnly && (
+            <button
+              type="button"
+              onClick={() => navigate('/chat')}
+              className="md:hidden shrink-0 px-4 py-2 text-xs text-brand-accent border-b border-border bg-card text-left"
+            >
+              ← Volver al inbox
+            </button>
+          )}
 
-        {conversationId && user?.id ? (
-          <ConversationDetail conversationId={conversationId} agentId={user.id} />
-        ) : (
-          <NoConversationSelected />
-        )}
-      </section>
+          {conversationId && user?.id ? (
+            <ConversationDetail conversationId={conversationId} agentId={user.id} />
+          ) : (
+            <NoConversationSelected />
+          )}
+        </section>
+      </div>
     </div>
   )
 }

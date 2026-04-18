@@ -176,12 +176,13 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
         </div>
       </header>
 
-      {/* Thread — content centered with max-width so very wide monitors
-          don't stretch bubbles edge-to-edge. The scroll container stays
-          full-width so the scrollbar sits at the panel's right edge.
-          min-h-0 on the flex-1 child is what enables internal scrolling. */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-muted/20">
-        <ol className="max-w-3xl mx-auto px-4 py-3 space-y-2">
+      {/* Thread — flat single-background pane (no muted tint frame). The
+          OL is centered with max-w-3xl so bubbles read as a coherent column
+          on wide monitors; the scroll container stays full-width so the
+          scrollbar hugs the right edge of the panel. min-h-0 enables the
+          internal scroll. */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <ol className="max-w-3xl mx-auto px-3 py-4 space-y-2.5">
           {messages.length === 0 ? (
             <li className="flex items-center justify-center h-40 text-sm text-muted-foreground gap-2">
               <UserCircle2 className="h-4 w-4" aria-hidden="true" />
@@ -199,9 +200,9 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
         </ol>
       </div>
 
-      {/* Composer — same max-width centering so the input aligns with the
-          last message bubble above it. shrink-0 ensures the composer never
-          gets squeezed when the thread is long. */}
+      {/* Composer rail — full-width separator (border-t + bg) so the
+          divider runs edge-to-edge of the detail pane; the inner div
+          centers the actual textarea+send to align with the thread above. */}
       <div className="shrink-0 border-t border-border bg-card">
         <div className="max-w-3xl mx-auto">
           <AgentComposer
