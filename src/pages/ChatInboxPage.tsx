@@ -7,6 +7,7 @@ import {
   InboxList,
   NoConversationSelected,
   ConversationDetail,
+  ChatMetricsCard,
   useChatInboxStore,
   useInboxConversations,
   type InboxFilters,
@@ -74,10 +75,19 @@ export function ChatInboxPage() {
     // its rounded corners cleanly; min-h-0 + overflow-hidden on the
     // descendants confine scrolling to the thread + inbox list.
     <div
-      className="-m-6 lg:-m-8 p-4 lg:p-6 overflow-hidden
+      className="-m-6 lg:-m-8 p-4 lg:p-6 overflow-hidden flex flex-col gap-4
                  h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-3rem)] lg:h-[calc(100dvh-4rem)]"
     >
-      <div className="h-full flex flex-col md:flex-row rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* KPIs strip — own card, fixed-ish height (~120px). Sits above
+          the chat card so the agent gets a glance at responsiveness
+          before diving into individual conversations. */}
+      <div className="shrink-0 rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+        <ChatMetricsCard />
+      </div>
+
+      {/* Chat card — fills the remaining vertical space (flex-1 + min-h-0
+          so the inner panes' overflow-y-auto actually clips). */}
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row rounded-xl border border-border bg-card overflow-hidden shadow-sm">
         {/* List pane */}
         <aside
           className={cn(

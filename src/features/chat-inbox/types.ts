@@ -150,3 +150,22 @@ export interface InboxFilters {
   /** Convenience filter for the UI tabs: 'all' | 'mine' | 'unassigned'. */
   tab?: 'all' | 'mine' | 'unassigned'
 }
+
+// ─── Metrics (matches backend's GetChatMetrics output) ───────────────────────
+
+export interface ChatMetrics {
+  windowDays: number
+  totalConversations: number
+  closedConversations: number
+  answeredConversations: number
+  openWithUnread: number
+  ttfrAvgMinutes: number | null
+  ttfrMedianMinutes: number | null
+  ttfrP95Minutes: number | null
+  ttcAvgMinutes: number | null
+  ttcMedianMinutes: number | null
+  /** 0..1 — share of conversations that received any agent reply. */
+  responseRate: number
+  /** 0..1 — share of conversations that ended in CLOSED status. */
+  closeRate: number
+}

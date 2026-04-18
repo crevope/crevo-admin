@@ -4,6 +4,7 @@ import type {
   ChatConversationDetail,
   ChatConversationAdminView,
   ChatMessageAdminView,
+  ChatMetrics,
   InboxFilters,
 } from '../types'
 
@@ -70,5 +71,17 @@ export const chatInboxRepository = {
   async close(conversationId: string): Promise<ChatConversationAdminView> {
     const { data } = await apiClient.post(`/chat/admin/conversations/${conversationId}/close`, {})
     return data?.data as ChatConversationAdminView
+  },
+
+  /**
+   * Aggregate KPIs (TTFR, TTC, response/close rates, counters) over a
+   * rolling window. `windowDays` is clamped server-side to [1, 365];
+   * default 30.
+   */
+  async getMetrics(windowDays?: number): Promise<ChatMetrics> {
+    const { data } = await apiClient.get('/chat/admin/metrics', {
+      params: windowDays ? { windowDays } : undefined,
+    })
+    return data?.data as ChatMetrics
   },
 }
