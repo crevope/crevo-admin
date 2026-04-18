@@ -137,6 +137,19 @@ function _applyEventToCache(
         user: prev.user,
       }
     }
+    case 'conversation_reopened': {
+      // Symmetric to close — flip status, clear closedAt so the
+      // "Cerrada" badge disappears and the composer re-enables.
+      return {
+        conversation: {
+          ...prev.conversation,
+          status: 'OPEN',
+          closedAt: null,
+        },
+        messages: prev.messages,
+        user: prev.user,
+      }
+    }
     case 'typing': {
       // Typing events don't touch the React Query cache — they're
       // handled by the inbox store directly (isUserTyping flag).

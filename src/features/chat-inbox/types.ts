@@ -85,6 +85,13 @@ export interface ChatBroadcastConversationClosedEvent {
   closedAt: string
 }
 
+/** Symmetric to conversation_closed — flip status back to OPEN. */
+export interface ChatBroadcastConversationReopenedEvent {
+  type: 'conversation_reopened'
+  conversationId: string
+  reopenedAt: string
+}
+
 /** Transient "X is typing" — emitted client→client (no backend round-trip),
  *  debounced on sender, auto-cleared 5s after last event on receiver. */
 export interface ChatBroadcastTypingEvent {
@@ -99,6 +106,7 @@ export type ChatBroadcastEvent =
   | ChatBroadcastMessageEvent
   | ChatBroadcastReadReceiptEvent
   | ChatBroadcastConversationClosedEvent
+  | ChatBroadcastConversationReopenedEvent
   | ChatBroadcastTypingEvent
 
 // ─── Optimistic UI helpers ───────────────────────────────────────────────────

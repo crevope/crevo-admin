@@ -73,6 +73,12 @@ export const chatInboxRepository = {
     return data?.data as ChatConversationAdminView
   },
 
+  /** Re-open a CLOSED conversation. Backend emits a SYSTEM reopen notice + broadcast. */
+  async reopen(conversationId: string): Promise<ChatConversationAdminView> {
+    const { data } = await apiClient.post(`/chat/admin/conversations/${conversationId}/reopen`, {})
+    return data?.data as ChatConversationAdminView
+  },
+
   /**
    * Aggregate KPIs (TTFR, TTC, response/close rates, counters) over a
    * rolling window. `windowDays` is clamped server-side to [1, 365];

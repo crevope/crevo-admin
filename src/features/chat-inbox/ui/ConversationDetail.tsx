@@ -7,6 +7,7 @@ import {
   X,
   UserCheck,
   UserCircle2,
+  RotateCcw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/shared/ui/button'
@@ -67,6 +68,19 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
       toast.success('Conversación cerrada')
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'No pudimos cerrar'),
+  })
+
+  const reopenMutation = useMutation({
+    mutationFn: () => chatInboxRepository.reopen(conversationId),
+    onSuccess: (updated) => {
+      qc.setQueryData<Detail | undefined>(conversationQueryKey(conversationId), (prev) => {
+        if (!prev) return prev
+        return { conversation: updated, messages: prev.messages, user: prev.user }
+      })
+      qc.invalidateQueries({ queryKey: ['admin', 'chat', 'inbox'] })
+      toast.success('Conversación reabierta')
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'No pudimos reabrir'),
   })
 
   const endRef = useRef<HTMLDivElement | null>(null)
@@ -171,6 +185,19 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Cerrar</span>
+              </Button>
+            )}
+            {isClosed && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => reopenMutation.mutate()}
+                disabled={reopenMutation.isPending}
+                className="h-8 gap-1.5 text-xs text-brand-accent hover:text-brand-accent"
+                title="Reabrir conversación"
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Reabrir</span>
               </Button>
             )}
           </div>
