@@ -63,11 +63,27 @@ export function ChatInboxPage() {
   const showDetailOnly = Boolean(conversationId)
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] -m-6 lg:-m-8 md:flex-row">
+    // Height math: AdminLayout wraps every page in `<main className="flex-1
+    // overflow-auto"><div className="...p-6 lg:p-8"><Outlet/></div>`. So the
+    // page's available height = main_height - wrapper_padding, which is
+    // 100dvh minus the mobile header (3.5rem when shown) minus the wrapper's
+    // vertical padding (3rem at base / 4rem at lg+). With these explicit
+    // values the wrapper exactly fills main, so AdminLayout's main has
+    // nothing to overflow and our internal flex chain owns the scroll.
+    //
+    // overflow-hidden + min-h-0 on the descendants is the second half of the
+    // story: without min-h-0, flex-1 children won't shrink below their
+    // intrinsic content size and the thread/list would push past us.
+    // With both pieces in place, the only scrollable areas are the
+    // conversation thread and the inbox list — exactly what we want.
+    <div
+      className="flex flex-col md:flex-row -m-6 lg:-m-8 overflow-hidden
+                 h-[calc(100dvh-6.5rem)] md:h-[calc(100dvh-3rem)] lg:h-[calc(100dvh-4rem)]"
+    >
       {/* List pane */}
       <aside
         className={cn(
-          'flex flex-col border-r border-border bg-card md:w-80 md:shrink-0',
+          'flex flex-col border-r border-border bg-card md:w-80 md:shrink-0 min-h-0',
           showDetailOnly ? 'hidden md:flex' : 'flex flex-1',
         )}
       >
@@ -106,7 +122,7 @@ export function ChatInboxPage() {
       {/* Detail pane */}
       <section
         className={cn(
-          'flex-1 flex flex-col min-w-0',
+          'flex-1 flex flex-col min-w-0 min-h-0',
           showDetailOnly ? 'flex' : 'hidden md:flex',
         )}
       >

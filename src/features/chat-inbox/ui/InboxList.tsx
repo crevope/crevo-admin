@@ -47,7 +47,11 @@ export function InboxList({ items, isLoading, activeConversationId }: Props) {
   }
 
   return (
-    <ol className="flex-1 overflow-y-auto divide-y divide-border">
+    // min-h-0 lets this flex-1 child shrink below its content's intrinsic
+    // height so overflow-y-auto actually clips. Without it, a long list
+    // would push the aside taller than the page and the outer layout
+    // would scroll instead of just this list.
+    <ol className="flex-1 min-h-0 overflow-y-auto divide-y divide-border">
       {items.map((c) => (
         <ConversationRow
           key={c.id}

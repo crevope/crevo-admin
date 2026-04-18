@@ -96,7 +96,11 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
   const isMine = conversation.assignedTo === agentId
 
   return (
-    <div className="flex-1 flex flex-col bg-background min-w-0">
+    // min-h-0 is the magic that lets the inner thread (flex-1 overflow-y-auto)
+    // actually clip its content. Without it, flex children refuse to shrink
+    // below their intrinsic size and the thread pushes past us, making the
+    // outer page scroll instead of the thread itself.
+    <div className="flex-1 flex flex-col bg-background min-w-0 min-h-0">
       {/* Header */}
       <header className="shrink-0 border-b border-border bg-card px-4 py-3">
         <div className="flex items-start justify-between gap-3">
@@ -174,8 +178,9 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
 
       {/* Thread — content centered with max-width so very wide monitors
           don't stretch bubbles edge-to-edge. The scroll container stays
-          full-width so the scrollbar sits at the panel's right edge. */}
-      <div className="flex-1 overflow-y-auto bg-muted/20">
+          full-width so the scrollbar sits at the panel's right edge.
+          min-h-0 on the flex-1 child is what enables internal scrolling. */}
+      <div className="flex-1 min-h-0 overflow-y-auto bg-muted/20">
         <ol className="max-w-3xl mx-auto px-4 py-3 space-y-2">
           {messages.length === 0 ? (
             <li className="flex items-center justify-center h-40 text-sm text-muted-foreground gap-2">
@@ -194,9 +199,10 @@ export function ConversationDetail({ conversationId, agentId }: Props) {
         </ol>
       </div>
 
-      {/* Composer — same max-width centering so input aligns with the
-          last message bubble above it. */}
-      <div className="border-t border-border bg-card">
+      {/* Composer — same max-width centering so the input aligns with the
+          last message bubble above it. shrink-0 ensures the composer never
+          gets squeezed when the thread is long. */}
+      <div className="shrink-0 border-t border-border bg-card">
         <div className="max-w-3xl mx-auto">
           <AgentComposer
             conversationId={conversationId}
