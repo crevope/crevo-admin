@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ChangeEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Send, Loader2, Smile, Paperclip, X as XIcon } from 'lucide-react'
+import { Send, Loader2, Smile, Paperclip, X as XIcon, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/shared/ui/button'
 import { chatInboxRepository } from '../api/chatInboxRepository'
@@ -10,6 +10,7 @@ import {
   TEMP_ID_PREFIX,
   ALLOWED_ATTACHMENT_MIME_TYPES,
   MAX_ATTACHMENT_SIZE_BYTES,
+  isImageMime,
   type ChatAttachmentMimeType,
 } from '../types'
 import type { ChatConversationDetail, ChatMessageAdminView } from '../types'
@@ -170,16 +171,28 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
       return { tempId, previous, attachment }
     },
     onSuccess: (saved, _vars, ctx) => {
-      // Swap temp for canonical
+      // Swap temp for canonical. Handle the race in both directions:
+      //   (A) REST won → replace by tempId.
+      //   (B) Broadcast won (broadcast already replaced temp with the
+      //       incoming-id message, which has NO signed URL on
+      //       attachments) → find by saved.id and overwrite with the
+      //       richer server-response so the bubble renders the image
+      //       instead of "no disponible" until refresh.
       qc.setQueryData<ChatConversationDetail | undefined>(
         conversationQueryKey(conversationId),
         (prev) => {
           if (!prev) return prev
-          return {
-            conversation: prev.conversation,
-            messages: prev.messages.map((m) => (m.id === ctx?.tempId ? saved : m)),
-            user: prev.user,
+          const idx = prev.messages.findIndex(
+            (m) => m.id === ctx?.tempId || m.id === saved.id,
+          )
+          let messages: typeof prev.messages
+          if (idx >= 0) {
+            messages = [...prev.messages]
+            messages[idx] = saved
+          } else {
+            messages = [...prev.messages, saved]
           }
+          return { conversation: prev.conversation, messages, user: prev.user }
         },
       )
       // Free the optimistic blob URL once the server-signed URL is in place.
@@ -233,12 +246,12 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
     e.target.value = ''
     if (!file) return
     if (!ALLOWED_ATTACHMENT_MIME_TYPES.includes(file.type as ChatAttachmentMimeType)) {
-      toast.error('Solo se aceptan imágenes (PNG, JPG, WebP, GIF).')
+      toast.error('Solo se aceptan imágenes (PNG, JPG, WebP, GIF) y PDF.')
       return
     }
     if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
       const maxMb = Math.round(MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024))
-      toast.error(`La imagen supera el límite de ${maxMb} MB.`)
+      toast.error(`El archivo supera el límite de ${maxMb} MB.`)
       return
     }
     if (staged?.localUrl) URL.revokeObjectURL(staged.localUrl)
@@ -261,14 +274,21 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
     // owns those so the divider spans the full pane width while the
     // textarea+button stay centered with the thread above.
     <div className="px-3 py-2.5">
-      {/* Staged-attachment preview row above the input. */}
+      {/* Staged-attachment preview row above the input. Images use a
+          thumbnail; PDFs use a generic document icon. */}
       {staged && (
         <div className="mb-2 inline-flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-1.5 max-w-full">
-          <img
-            src={staged.localUrl}
-            alt={staged.file.name}
-            className="h-14 w-14 rounded object-cover shrink-0"
-          />
+          {isImageMime(staged.file.type) ? (
+            <img
+              src={staged.localUrl}
+              alt={staged.file.name}
+              className="h-14 w-14 rounded object-cover shrink-0"
+            />
+          ) : (
+            <div className="h-14 w-14 rounded bg-red-500/10 flex items-center justify-center shrink-0">
+              <FileText className="h-6 w-6 text-red-500" aria-hidden="true" />
+            </div>
+          )}
           <div className="min-w-0 flex-1 pr-1 py-0.5">
             <p className="text-xs text-foreground truncate" title={staged.file.name}>
               {staged.file.name}
@@ -285,7 +305,7 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
               setStaged(null)
             }}
             disabled={isUploading}
-            aria-label="Quitar imagen"
+            aria-label="Quitar archivo"
             className="shrink-0 h-6 w-6 rounded hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
             <XIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -309,7 +329,7 @@ export function AgentComposer({ conversationId, isClosed, agentId }: Props) {
           size="icon"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading || send.isPending}
-          aria-label="Adjuntar imagen"
+          aria-label="Adjuntar archivo"
           className="h-9 w-9 text-muted-foreground hover:text-foreground"
         >
           <Paperclip className="h-4 w-4" aria-hidden="true" />

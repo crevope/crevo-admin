@@ -59,15 +59,22 @@ export interface ChatMessageAdminView {
   attachmentUrl?: string | null
 }
 
-/** Phase 1 attachment whitelist — kept in sync with backend. */
+/** Attachment whitelist — kept in sync with backend. Images render
+ *  inline in bubbles; PDFs render as a click-to-open file card. */
 export const ALLOWED_ATTACHMENT_MIME_TYPES = [
   'image/png',
   'image/jpeg',
   'image/webp',
   'image/gif',
+  'application/pdf',
 ] as const
 export type ChatAttachmentMimeType = (typeof ALLOWED_ATTACHMENT_MIME_TYPES)[number]
 export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024
+
+/** True when the attachment MIME renders inline as an image. */
+export function isImageMime(mime: string | null | undefined): boolean {
+  return Boolean(mime && mime.startsWith('image/'))
+}
 
 /** Response shape from POST /chat/attachments/upload-url. */
 export interface ChatAttachmentUploadUrl {
@@ -181,8 +188,9 @@ export interface InboxFilters {
   status?: ChatConversationStatus
   assignedTo?: string
   unassignedOnly?: boolean
-  /** Convenience filter for the UI tabs: 'all' | 'mine' | 'unassigned'. */
-  tab?: 'all' | 'mine' | 'unassigned'
+  /** Convenience filter for the UI tabs. `closed` flips status to CLOSED
+   *  (the others default to OPEN in the page that consumes this). */
+  tab?: 'all' | 'mine' | 'unassigned' | 'closed'
 }
 
 // ─── Metrics (matches backend's GetChatMetrics output) ───────────────────────

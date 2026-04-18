@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Check, CheckCheck, Info, ImageOff } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import type { ChatMessageAdminView } from '../types'
-import { isTempId } from '../types'
+import { isTempId, isImageMime } from '../types'
 import { ImageLightbox } from './ImageLightbox'
+import { AttachmentFileCard } from './AttachmentFileCard'
 
 interface Props {
   message: ChatMessageAdminView
@@ -41,6 +42,7 @@ export function MessageBubble({ message }: Props) {
   const seen = Boolean(message.readAt)
   const hasAttachment = Boolean(message.attachmentPath)
   const hasBody = Boolean(message.body)
+  const attachmentIsImage = isImageMime(message.attachmentMimeType)
 
   return (
     <>
@@ -56,7 +58,7 @@ export function MessageBubble({ message }: Props) {
               : 'bg-card text-foreground rounded-bl-sm border border-border',
           )}
         >
-          {hasAttachment && (
+          {hasAttachment && attachmentIsImage && (
             <button
               type="button"
               onClick={() => message.attachmentUrl && setLightboxOpen(true)}
@@ -77,6 +79,14 @@ export function MessageBubble({ message }: Props) {
                 </div>
               )}
             </button>
+          )}
+          {hasAttachment && !attachmentIsImage && (
+            <AttachmentFileCard
+              url={message.attachmentUrl ?? null}
+              filename={message.attachmentFilename}
+              sizeBytes={message.attachmentSizeBytes}
+              variant={isAgent ? 'agent' : 'user'}
+            />
           )}
 
           {hasBody && <p className="px-3.5 pt-2">{message.body}</p>}

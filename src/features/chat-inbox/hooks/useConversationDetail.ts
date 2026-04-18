@@ -90,7 +90,17 @@ function _applyEventToCache(
       let nextMessages: ChatMessageAdminView[]
       if (tempIdx >= 0) {
         nextMessages = [...prev.messages]
-        nextMessages[tempIdx] = incoming
+        const previousTemp = prev.messages[tempIdx]
+        // Preserve the optimistic local blob URL on attachments. The
+        // broadcast carries `attachmentPath` but NOT a signed URL
+        // (signed URLs expire). Without this, the bubble flashes "no
+        // disponible" between broadcast arrival and REST completion —
+        // see matching fix in AgentComposer.onSuccess for the canonical
+        // swap once the server response lands.
+        nextMessages[tempIdx] = {
+          ...incoming,
+          attachmentUrl: incoming.attachmentUrl ?? previousTemp.attachmentUrl ?? null,
+        }
       } else {
         nextMessages = [...prev.messages, incoming]
       }

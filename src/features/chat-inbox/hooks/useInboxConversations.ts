@@ -30,10 +30,13 @@ interface UseInboxOptions {
 }
 
 export function useInboxConversations({ filters, agentId, enabled = true }: UseInboxOptions) {
-  // Translate the tab into concrete server filters.
+  // Translate the tab into concrete server filters. `closed` overrides
+  // the default OPEN status; the other tabs inherit whatever status the
+  // page passed in (typically 'OPEN').
   const serverFilters: InboxFilters = (() => {
     if (filters.tab === 'mine') return { ...filters, assignedTo: agentId }
     if (filters.tab === 'unassigned') return { ...filters, unassignedOnly: true }
+    if (filters.tab === 'closed') return { ...filters, status: 'CLOSED' }
     return filters
   })()
 
